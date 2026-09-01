@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Precompiling Julia environment..."
+julia --project=. -e '
+    using Pkg
+    Pkg.instantiate()
+    Pkg.precompile()
+
+    # Force-load every top-level dependency once so its compiled
+    # cache is baked into this image layer, not paid for by the
+    # first user session on the hub.
+    for pkg in keys(Pkg.project().dependencies)
+        @eval using $(Symbol(pkg))
+    end
+'
