@@ -1,0 +1,3 @@
+#!/bin/bash
+export JUPYTER_RUNTIME_DIR="${HOME}/.local/share/jupyter/runtime"
+exec "$@"

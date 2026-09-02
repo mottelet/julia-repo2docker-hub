@@ -27,6 +27,14 @@ It calls `Pkg.instantiate()` / `Pkg.precompile()` and then `using`-loads every
 top-level dependency once, so the compiled package cache is baked into the Docker
 image layer instead of being paid for by the first notebook session on the hub.
 
+## Start script
+
+[`start`](start) sets `JUPYTER_RUNTIME_DIR` to the standard per-user location
+(`$HOME/.local/share/jupyter/runtime`) before handing off to whatever command
+the hub uses to launch the session. repo2docker runs this script as a wrapper
+around every container command, so it applies whether the container is started
+directly, via `jupyter-repo2docker`, or spawned by JupyterHub.
+
 ## Adding or changing packages
 
 Edit `Project.toml`'s `[deps]` section (each entry is `Name = "uuid"`) and rebuild.
