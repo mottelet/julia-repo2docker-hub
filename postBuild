@@ -2,13 +2,24 @@
 set -euo pipefail
 
 # The hub's serving nodes may have different CPU features than this build
-# machine. Precompiling with "generic" avoids baking in instructions
-# (e.g. AVX-512) that trigger an "illegal instruction" crash on nodes that
-# lack them at container start. If your hub's nodes are known, homogeneous
-# x86_64 hardware, you can trade this for the official multiversioning
-# target instead:
-#   generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)
-export JULIA_CPU_TARGET=generic
+# machine. Precompiling native code for the build machine can trigger an
+# "illegal instruction" crash on nodes that lack one of those features at
+# container start. These are the same multiversioning targets the official
+# Julia binaries/Docker images use: a "fat binary" with variants for several
+# CPU generations, so each node picks the best one it supports at runtime
+# instead of everything being flattened to the lowest common denominator.
+# See https://words.yuvi.in/post/pre-compiling-julia-docker/
+case "$(uname -m)" in
+    x86_64)
+        export JULIA_CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)"
+        ;;
+    aarch64|arm64)
+        export JULIA_CPU_TARGET="generic;cortex-a57;thunderx2t99;carmel"
+        ;;
+    *)
+        export JULIA_CPU_TARGET=generic
+        ;;
+esac
 
 echo "Precompiling Julia environment (JULIA_CPU_TARGET=$JULIA_CPU_TARGET)..."
 julia --project=. -e '
