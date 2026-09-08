@@ -1,7 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "Precompiling Julia environment..."
+# The hub's serving nodes may have different CPU features than this build
+# machine. Precompiling with "generic" avoids baking in instructions
+# (e.g. AVX-512) that trigger an "illegal instruction" crash on nodes that
+# lack them at container start. If your hub's nodes are known, homogeneous
+# x86_64 hardware, you can trade this for the official multiversioning
+# target instead:
+#   generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)
+export JULIA_CPU_TARGET=generic
+
+echo "Precompiling Julia environment (JULIA_CPU_TARGET=$JULIA_CPU_TARGET)..."
 julia --project=. -e '
     using Pkg
     Pkg.instantiate()

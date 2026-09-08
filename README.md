@@ -27,6 +27,16 @@ It calls `Pkg.instantiate()` / `Pkg.precompile()` and then `using`-loads every
 top-level dependency once, so the compiled package cache is baked into the Docker
 image layer instead of being paid for by the first notebook session on the hub.
 
+It also sets `JULIA_CPU_TARGET=generic` before precompiling. Without this,
+packages get compiled with native code for whichever CPU features the *build*
+machine has; if the hub's serving nodes lack one of those features (e.g.
+AVX-512), the precompiled cache crashes the container on start with an
+"illegal instruction" error — which surfaces on JupyterHub as a restart
+back-off loop and a spawn timeout, not a clear error message. `generic` trades
+a little runtime performance for working on any node. If your hub's nodes are
+known, homogeneous x86_64 hardware, see the comment in `postBuild` for the
+official multiversioning target instead.
+
 ## Start script
 
 [`start`](start) sets `JUPYTER_RUNTIME_DIR` to the standard per-user location
